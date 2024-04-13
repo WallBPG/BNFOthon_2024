@@ -19,7 +19,7 @@ import pandas as pd
 import keras
 from keras import layers
 
-import pickle
+import json
 
 #import keras
 
@@ -155,7 +155,7 @@ class COVID:
         return self._val_ds
             
 
-    def _get_model(self, path = './temp_model.pkl') -> tuple:
+    def _get_model(self, path = './model_1.json') -> tuple:
 
         if not os.path.isfile(path):
                 
@@ -271,12 +271,12 @@ class COVID:
                 metrics=["accuracy"]
             )
             
-            with open(path, 'wb') as out_file:
-                pickle.dump(model, out_file)
+            with open(path, 'w') as out_file:
+                out_file.write(model.to_json())
 
         else:
-            with open(path, 'rb') as in_file:
-                model = pickle.load(in_file)
+            with open(path, 'r') as in_file:
+                model = keras.models.model_from_json(''.join(in_file.readlines()))
         
         return model
     
