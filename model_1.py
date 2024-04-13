@@ -155,7 +155,7 @@ class COVID:
         return self._val_ds
             
 
-    def _get_model(self, path = './model_1.json') -> tuple:
+    def _get_model(self, path = './model_1.zip') -> keras.Model:
 
         if not os.path.isfile(path):
                 
@@ -270,13 +270,10 @@ class COVID:
                 loss=keras.losses.BinaryCrossentropy(),
                 metrics=["accuracy"]
             )
-            
-            with open(path, 'w') as out_file:
-                out_file.write(model.to_json())
+            model.save(path)
 
         else:
-            with open(path, 'r') as in_file:
-                model = keras.models.model_from_json(''.join(in_file.readlines()))
+            model = keras.models.load_model(path)
         
         return model
     
