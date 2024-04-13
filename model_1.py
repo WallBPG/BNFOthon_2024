@@ -8,13 +8,16 @@ BNFOthon 2024
 '''
 import numpy as np
 import pandas as pd
+import os
 import keras
 
 class COVID_Data:
-    def __init__(self, path: str) -> None:
-        self.path = path
+    def __init__(self, in_path: str, processed_path: str = './Processed Covid Data') -> None:
+        self.in_path = in_path
+        self.proc_path = processed_path
+        self._data = None
 
-    def process_csv(self) -> pd.DataFrame:
+    def __process_csv(self, out_path: str = 'Processed Covid Data') -> pd.DataFrame:
         '''
         - sex: 1 for female and 2 for male.
         - age: of the patient.
@@ -40,18 +43,37 @@ class COVID_Data:
         - date died: If the patient died indicate the date of death, and 9999-99-99 otherwise.
         '''
 
-        covid_df = pd.read_csv(self.path)
+        covid_df = pd.read_csv(self.in_path)
 
-        # Reformat data to start at 0
-        
+        covid_df.replace(97, np.nan, inplace=True)
 
-        #covid_df['']
+        convert_list = [
+            'SEX', 'PATIENT_TYPE', 'INTUBED', 'PNEUMONIA', 'DIABETES',
+            'COPD', 'ASTHMA', 'INMSUPR', 'HIPERTENSION', 'OTHER_DISEASE',
+            'CARDIOVASCULAR', 'OBESITY', 'RENAL_CHRONIC', 'TOBACCO', 'ICU'
+        ]
 
+        # Reformat data to 0 and 1 for classed columns
+        covid_df[convert_list] = covid_df[convert_list].map(lambda x: {1: 0, 2: 1}.get(x, np.nan))
+        covid_df['DATE_DIED'] = covid_df['DATE_DIED'].map(lambda x: 1 if x == '9999-99-99' else 0)
+        covid_df['PREGNANT'] = covid_df['PREGNANT'].map({1: 0, 2: 1, np.nan: 0})
+        covid_df['CLASIFFICATION_FINAL'] = covid_df['CLASIFFICATION_FINAL'].map(lambda x: 1 if x <= 3 else 0)
+
+        covid_df.to_csv(out_path)
         return covid_df
+
+    @property
+    def data(self) -> pd.DataFrame:
+        if not self._data:
+            if not os.path.isfile(self.proc_path):
+                self._data = self.__process_csv(self.proc_path)
+            else:
+                self.data = pd.read_csv(self.proc_path)
+        return self._data
 
 def main():
     covid_data = COVID_Data('./Covid Data.csv')
-    print(covid_data.process_csv().columns)
+    print(covid_data.process_csv()['CLASIFFICATION_FINAL'])
 
 covid_columns = [
     'USMER', 'MEDICAL_UNIT', 'SEX', 'PATIENT_TYPE', 'DATE_DIED', 'INTUBED',
