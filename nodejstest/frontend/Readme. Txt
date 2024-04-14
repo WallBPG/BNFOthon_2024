@@ -1,0 +1,5 @@
+dependencies: node.js (packaged with npm)
+
+to run server locally cd to frontend and run
+npm index.js
+then open web browser to localhost:10000
