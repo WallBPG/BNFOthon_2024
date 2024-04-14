@@ -1,0 +1,21 @@
+python3 neural_covid_classifier.py \
+    --in_path "./Covid Data.csv" \
+    --processed_path "Processed Covid Data.csv" \
+    --seed 42 \
+    --validation_frac 0.2 \
+    --batch 32 \
+    --SEX 0 \
+    --PNEUMONIA 1 \
+    --AGE 42 \
+    --PREGNANT 0 \
+    --DIABETES 1 \
+    --COPD 0 \
+    --ASTHMA 1 \
+    --INMSUPR 0 \
+    --HIPERTENSION 0 \
+    --OTHER_DISEASE 1 \
+    --CARDIOVASCULAR 1 \
+    --OBESITY 0 \
+    --RENAL_CHRONIC 0 \
+    --TOBACCO 0
+
