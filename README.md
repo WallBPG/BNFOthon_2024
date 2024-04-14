@@ -18,5 +18,8 @@ Nueral Network Model:
 Nueral Network Usage:
 - See [example_run.sh](./example_run.sh)
 
+GUI Code:
+- [nodejstest](./nodejstest)
+
 GUI Demo:
 - [link here](https://replit.com/@fanusr/BNFOthon2024?s=app)
