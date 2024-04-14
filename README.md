@@ -6,20 +6,25 @@ risk for COVID-19.
 symptom, status, and medical history, will predict whether the patient is at high
 risk or not. This can either have a graphical user interface or just be a script.
 
-Resources:
+## Resources:
 - [COVID-19 Dataset](https://www.kaggle.com/datasets/meirnizri/covid19-dataset)
 
-Logistic Regression Model:
+## Logistic Regression Model:
 - [Logistic-ML-COVID-19.ipynb](./Logistic-ML-COVID-19.ipynb)
 
-Nueral Network Model:
+## Nueral Network Model:
 - [neural_covid_classifier.py](./neural_covid_classifier.py)
 
-Nueral Network Usage:
+## Nueral Network Usage:
 - See [example_run.sh](./example_run.sh)
 
-GUI Code:
+## GUI Code:
 - [nodejstest](./nodejstest)
+Added short todo, with short explanation of the most current major bug.
+connected HTML, CSS, JavaScript, and python.
+Documentation nonexistent, sorry.
+Uses node.js and express
 
-GUI Demo:
-- [link here](https://replit.com/@fanusr/BNFOthon2024?s=app)
+## GUI Demo:
+- [AppDemo.mp4](./AppDemo.mp4)
+- [replit link here](https://replit.com/@fanusr/BNFOthon2024?s=app)
