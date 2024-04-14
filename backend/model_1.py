@@ -42,7 +42,8 @@ class COVID:
             exclude = [
                 'USMER', 'MEDICAL_UNIT', 'CLASIFFICATION_FINAL', 'ICU'
             ],
-            batch = 32
+            batch = 32,
+            only_covid_positive: bool = False
         ) -> None:
         self.in_path = in_path
         self.proc_path = processed_path
@@ -56,33 +57,10 @@ class COVID:
         self.batch = 32
         self._train_ds = None
         self._val_ds = None
-        self._features = None
+        self._features = None,
+        self.only_covid_positive = only_covid_positive
 
     def __process_csv(self, out_path: str = 'Processed Covid Data.csv') -> pd.DataFrame:
-        '''
-        - sex: 1 for female and 2 for male.
-        - age: of the patient.
-        - classification: covid test findings. Values 1-3 mean that the patient was diagnosed with covid in different
-        degrees. 4 or higher means that the patient is not a carrier of covid or that the test is inconclusive.
-        - patient type: type of care the patient received in the unit. 1 for returned home and 2 for hospitalization.
-        - pneumonia: whether the patient already have air sacs inflammation or not.
-        - pregnancy: whether the patient is pregnant or not.
-        - diabetes: whether the patient has diabetes or not.
-        - copd: Indicates whether the patient has Chronic obstructive pulmonary disease or not.
-        - asthma: whether the patient has asthma or not.
-        - inmsupr: whether the patient is immunosuppressed or not.
-        - hypertension: whether the patient has hypertension or not.
-        - cardiovascular: whether the patient has heart or blood vessels related disease.
-        - renal chronic: whether the patient has chronic renal disease or not.
-        - other disease: whether the patient has other disease or not.
-        - obesity: whether the patient is obese or not.
-        - tobacco: whether the patient is a tobacco user.
-        - usmr: Indicates whether the patient treated medical units of the first, second or third level.
-        - medical unit: type of institution of the National Health System that provided the care.
-        - intubed: whether the patient was connected to the ventilator.
-        - icu: Indicates whether the patient had been admitted to an Intensive Care Unit.
-        - date died: If the patient died indicate the date of death, and 9999-99-99 otherwise.
-        '''
 
         covid_df = pd.read_csv(self.in_path)
 
@@ -116,8 +94,11 @@ class COVID:
             else:
                 self._data = pd.read_csv(self.proc_path, index_col=0)
 
+            # Drop columns / subset
+            if self.only_covid_positive:
+                self._data = self._data[self._data['CLASIFFICATION_FINAL'] == 1]
             self._data = self._data.drop(columns=self.exclude)
-            
+
             # Subset so that p_types are equal
             p_type_0 = len(self._data[self._data['PATIENT_TYPE'] == 0])
             p_type_1 = len(self._data[self._data['PATIENT_TYPE'] == 1])
@@ -125,6 +106,7 @@ class COVID:
             self._data = pd.concat([self._data[self._data['PATIENT_TYPE'] == 0].sample(
                 frac=p_type_frac, random_state=self.seed
             ), self._data[self._data['PATIENT_TYPE'] == 1]])
+
         return self._data
 
     @property
@@ -290,7 +272,7 @@ class COVID:
             metrics=["accuracy"]
         )
         #keras.utils.plot_model(model, show_shapes=True, rankdir="LR")
-        model.fit(train_ds, epochs=5, validation_data=val_ds)
+        model.fit(train_ds, epochs=20, validation_data=val_ds)
     
         return model
 
@@ -381,37 +363,53 @@ def parse_arguments():
 
     # Required argument
     parser.add_argument('--in_path', type=str, default=os.path.normpath('./Covid Data.csv'),
-                        help='Input path for the data')
+                        help='Input path for the data (./Covid Data.csv from https://www.kaggle.com/datasets/meirnizri/covid19-dataset)')
 
     # Optional arguments with default values
     parser.add_argument('--processed_path', type=str, default=os.path.normpath('./Processed Covid Data.csv'),
-                        help='Path for the processed data file')
+                        help='Path for the processed data file to be created')
     parser.add_argument('--class_col', type=str, default='PATIENT_TYPE',
-                        help='Column name for the class label')
+                        help='Column name for the class label - not implemented / do not change')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed for reproducibility')
     parser.add_argument('--validation_frac', type=float, default=0.2,
                         help='Fraction of data to use for validation')
     parser.add_argument('--exclude', nargs='+', default=['USMER', 'MEDICAL_UNIT', 'CLASIFFICATION_FINAL', 'ICU'],
-                        help='List of columns to exclude from the data')
+                        help='List of columns to exclude from the data, defaults: USMER MEDICAL_UNIT CLASIFFICATION_FINAL ICU')
     parser.add_argument('--batch', type=int, default=32,
-                        help='Batch size for data processing')
+                        help='Batch size for data processing (integer)')
+    parser.add_argument('--only_positive', type=bool, default=False,
+                        help='Subset the data to only patients who test positive for COVID-19 (True or False)')
 
     # Default values for additional parameters
-    parser.add_argument('--SEX', type=int, default=0)
-    parser.add_argument('--PNEUMONIA', type=int, default=0)
-    parser.add_argument('--AGE', type=int, default=35)
-    parser.add_argument('--PREGNANT', type=int, default=1)
-    parser.add_argument('--DIABETES', type=int, default=0)
-    parser.add_argument('--COPD', type=int, default=0)
-    parser.add_argument('--ASTHMA', type=int, default=1)
-    parser.add_argument('--INMSUPR', type=int, default=1)
-    parser.add_argument('--HIPERTENSION', type=int, default=1)
-    parser.add_argument('--OTHER_DISEASE', type=int, default=1)
-    parser.add_argument('--CARDIOVASCULAR', type=int, default=1)
-    parser.add_argument('--OBESITY', type=int, default=1)
-    parser.add_argument('--RENAL_CHRONIC', type=int, default=1)
-    parser.add_argument('--TOBACCO', type=int, default=1)
+    parser.add_argument('--SEX', type=int, default=0,
+                        help='0 for female and 1 for male.')
+    parser.add_argument('--PNEUMONIA', type=int, default=0,
+                        help='whether the patient already have air sacs inflammation or not. (0 or 1)')
+    parser.add_argument('--AGE', type=int, default=35,
+                        help='integer age of the patient.')
+    parser.add_argument('--PREGNANT', type=int, default=1,
+                        help='whether the patient is pregnant or not. (0 or 1)')
+    parser.add_argument('--DIABETES', type=int, default=0,
+                        help='whether the patient has diabetes or not. (0 or 1)')
+    parser.add_argument('--COPD', type=int, default=0,
+                        help='Indicates whether the patient has Chronic obstructive pulmonary disease or not. (0 or 1)')
+    parser.add_argument('--ASTHMA', type=int, default=1,
+                        help='whether the patient has asthma or not. (0 or 1)')
+    parser.add_argument('--INMSUPR', type=int, default=1,
+                        help='whether the patient is immunosuppressed or not. (0 or 1)')
+    parser.add_argument('--HIPERTENSION', type=int, default=1,
+                        help='whether the patient has hypertension or not. (0 or 1)')
+    parser.add_argument('--OTHER_DISEASE', type=int, default=1,
+                        help='whether the patient has other disease or not. (0 or 1)')
+    parser.add_argument('--CARDIOVASCULAR', type=int, default=1,
+                        help='whether the patient has heart or blood vessels related disease. (0 or 1)')
+    parser.add_argument('--OBESITY', type=int, default=1,
+                        help='whether the patient is obese or not. (0 or 1)')
+    parser.add_argument('--RENAL_CHRONIC', type=int, default=1,
+                        help='whether the patient has chronic renal disease or not. (0 or 1)')
+    parser.add_argument('--TOBACCO', type=int, default=1,
+                        help='whether the patient is a tobacco user. (0 or 1)')
 
     return parser.parse_args()
 
@@ -424,9 +422,10 @@ def main():
         seed=args.seed,
         validation_frac=args.validation_frac,
         exclude=args.exclude,
-        batch=args.batch
+        batch=args.batch,
+        only_covid_positive = args.only_positive
     )
-    
+
     '''
     Namespace(in_path='./Covid Data.csv', processed_path='./Processed Covid Data.csv', class_col='PATIENT_TYPE', seed=42, validation_frac=0.2, exclude=['USMER', 'MEDICAL_UNIT', 'CLASIFFICATION_FINAL', 'ICU'], batch=32, SEX=0, PNEUMONIA=0, AGE=35, PREGNANT=1, DIABETES=0, COPD=0, ASTHMA=1, INMSUPR=1, HIPERTENSION=1, OTHER_DISEASE=1, CARDIOVASCULAR=1, OBESITY=1, RENAL_CHRONIC=1, TOBACCO=1)
     '''
