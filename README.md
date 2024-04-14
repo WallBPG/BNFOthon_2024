@@ -9,6 +9,9 @@ risk or not. This can either have a graphical user interface or just be a script
 Resources:
 - [COVID-19 Dataset](https://www.kaggle.com/datasets/meirnizri/covid19-dataset)
 
+Logistic Regression Model:
+- [Logistic-ML-COVID-19.ipynb](./Logistic-ML-COVID-19.ipynb)
+
 Nueral Network Model:
 - [neural_covid_classifier.py](./neural_covid_classifier.py)
 
