@@ -18,8 +18,8 @@ import tensorflow as tf
 import pandas as pd
 import keras
 from keras import layers
-
-import json
+import pickle
+import argparse
 
 #import keras
 
@@ -34,7 +34,7 @@ class COVID:
 
     def __init__(
             self,
-            in_path: str,
+            in_path: str = './Covid Data.csv',
             processed_path: str = './Processed Covid Data.csv',
             class_col: str = 'PATIENT_TYPE',
             seed: int = 42,
@@ -115,8 +115,16 @@ class COVID:
                 self._data = self.__process_csv(self.proc_path)
             else:
                 self._data = pd.read_csv(self.proc_path, index_col=0)
+
+            self._data = self._data.drop(columns=self.exclude)
             
-            #self._data = self._data.drop(columns=self.exclude)
+            # Subset so that p_types are equal
+            p_type_0 = len(self._data[self._data['PATIENT_TYPE'] == 0])
+            p_type_1 = len(self._data[self._data['PATIENT_TYPE'] == 1])
+            p_type_frac = p_type_1 / p_type_0
+            self._data = pd.concat([self._data[self._data['PATIENT_TYPE'] == 0].sample(
+                frac=p_type_frac, random_state=self.seed
+            ), self._data[self._data['PATIENT_TYPE'] == 1]])
         return self._data
 
     @property
@@ -157,157 +165,162 @@ class COVID:
             
 
     def train_model(self, path = './model_1.keras') -> keras.Model:
-
-        if not os.path.isfile(path):
                 
-            train_ds = self.train_ds
-            val_ds = self.val_ds
+        train_ds = self.train_ds
+        val_ds = self.val_ds
+        #all_f_layers_pkl = './temp_f_layers.pkl'
+        #if not os.path.isfile(all_f_layers_pkl):
 
-            # Categorical features encoded as integers
-            #usmer = keras.Input(shape=(1,), name="USMER", dtype="int64")
-            #medical_unit = keras.Input(shape=(1,), name="MEDICAL_UNIT", dtype="int64")
-            sex = keras.Input(shape=(1,), name="SEX", dtype="int64")
-            #patient_type = keras.Input(shape=(1,), name="PATIENT_TYPE", dtype="int64")
-            #date_died = keras.Input(shape=(1,), name="DATE_DIED", dtype="int64")
-            #intubed = keras.Input(shape=(1,), name="INTUBED", dtype="int64")
-            pneumonia = keras.Input(shape=(1,), name="PNEUMONIA", dtype="int64")
-            pregnant = keras.Input(shape=(1,), name="PREGNANT", dtype="int64")
-            diabetes = keras.Input(shape=(1,), name="DIABETES", dtype="int64")
-            copd = keras.Input(shape=(1,), name="COPD", dtype="int64")
-            asthma = keras.Input(shape=(1,), name="ASTHMA", dtype="int64")
-            inmsupr = keras.Input(shape=(1,), name="INMSUPR", dtype="int64")
-            hipertension = keras.Input(shape=(1,), name="HIPERTENSION", dtype="int64")
-            other_disease = keras.Input(shape=(1,), name="OTHER_DISEASE", dtype="int64")
-            cardiovascular = keras.Input(shape=(1,), name="CARDIOVASCULAR", dtype="int64")
-            obesity = keras.Input(shape=(1,), name="OBESITY", dtype="int64")
-            renal_chronic = keras.Input(shape=(1,), name="RENAL_CHRONIC", dtype="int64")
-            tobacco = keras.Input(shape=(1,), name="TOBACCO", dtype="int64")
-            #clasiffication_final = keras.Input(shape=(1,), name="CLASIFFICATION_FINAL", dtype="int64")
-            #icu = keras.Input(shape=(1,), name="ICU", dtype="int64")
+        # Categorical features encoded as integers
+        #usmer = keras.Input(shape=(1,), name="USMER", dtype="int64")
+        #medical_unit = keras.Input(shape=(1,), name="MEDICAL_UNIT", dtype="int64")
+        sex = keras.Input(shape=(1,), name="SEX", dtype="int64")
+        #patient_type = keras.Input(shape=(1,), name="PATIENT_TYPE", dtype="int64")
+        #date_died = keras.Input(shape=(1,), name="DATE_DIED", dtype="int64")
+        #intubed = keras.Input(shape=(1,), name="INTUBED", dtype="int64")
+        pneumonia = keras.Input(shape=(1,), name="PNEUMONIA", dtype="int64")
+        pregnant = keras.Input(shape=(1,), name="PREGNANT", dtype="int64")
+        diabetes = keras.Input(shape=(1,), name="DIABETES", dtype="int64")
+        copd = keras.Input(shape=(1,), name="COPD", dtype="int64")
+        asthma = keras.Input(shape=(1,), name="ASTHMA", dtype="int64")
+        inmsupr = keras.Input(shape=(1,), name="INMSUPR", dtype="int64")
+        hipertension = keras.Input(shape=(1,), name="HIPERTENSION", dtype="int64")
+        other_disease = keras.Input(shape=(1,), name="OTHER_DISEASE", dtype="int64")
+        cardiovascular = keras.Input(shape=(1,), name="CARDIOVASCULAR", dtype="int64")
+        obesity = keras.Input(shape=(1,), name="OBESITY", dtype="int64")
+        renal_chronic = keras.Input(shape=(1,), name="RENAL_CHRONIC", dtype="int64")
+        tobacco = keras.Input(shape=(1,), name="TOBACCO", dtype="int64")
+        #clasiffication_final = keras.Input(shape=(1,), name="CLASIFFICATION_FINAL", dtype="int64")
+        #icu = keras.Input(shape=(1,), name="ICU", dtype="int64")
 
-            # Numerical features
-            age = keras.Input(shape=(1,), name="AGE")
+        # Numerical features
+        age = keras.Input(shape=(1,), name="AGE")
 
-            all_inputs = [
-                #usmer,
-                #medical_unit,
-                sex,
-                #patient_type,
-                #date_died,
-                #intubed,
-                pneumonia,
-                age,
-                pregnant,
-                diabetes,
-                copd,
-                asthma,
-                inmsupr,
-                hipertension,
-                other_disease,
-                cardiovascular,
-                obesity,
-                renal_chronic,
-                tobacco#,
-                #clasiffication_final,
-                #icu
-            ]
+        all_inputs = [
+            #usmer,
+            #medical_unit,
+            sex,
+            #patient_type,
+            #date_died,
+            #intubed,
+            pneumonia,
+            age,
+            pregnant,
+            diabetes,
+            copd,
+            asthma,
+            inmsupr,
+            hipertension,
+            other_disease,
+            cardiovascular,
+            obesity,
+            renal_chronic,
+            tobacco#,
+            #clasiffication_final,
+            #icu
+        ]
 
-            # Integer categorical features
-            #usmer_encoded = encode_categorical_feature(sex, "USMER", train_ds, False)
-            #medical_unit_encoded = encode_categorical_feature(sex, "MEDICAL_UNIT", train_ds, False)
-            sex_encoded = encode_categorical_feature(sex, "SEX", train_ds, False)
-            #patient_type_encoded = encode_categorical_feature(sex, "PATIENT_TYPE", train_ds, False)
-            #date_died_encoded = encode_categorical_feature(sex, "DATE_DIED", train_ds, False)
-            #intubed_encoded = encode_categorical_feature(sex, "INTUBED", train_ds, False)
-            pneumonia_encoded = encode_categorical_feature(sex, "PNEUMONIA", train_ds, False)
-            pregnant_encoded = encode_categorical_feature(sex, "PREGNANT", train_ds, False)
-            diabetes_encoded = encode_categorical_feature(sex, "DIABETES", train_ds, False)
-            copd_encoded = encode_categorical_feature(sex, "COPD", train_ds, False)
-            asthma_encoded = encode_categorical_feature(sex, "ASTHMA", train_ds, False)
-            inmsupr_encoded = encode_categorical_feature(sex, "INMSUPR", train_ds, False)
-            hipertension_encoded = encode_categorical_feature(sex, "HIPERTENSION", train_ds, False)
-            other_disease_encoded = encode_categorical_feature(sex, "OTHER_DISEASE", train_ds, False)
-            cardiovascular_encoded = encode_categorical_feature(sex, "CARDIOVASCULAR", train_ds, False)
-            obesity_encoded = encode_categorical_feature(sex, "OBESITY", train_ds, False)
-            renal_chronic_encoded = encode_categorical_feature(sex, "RENAL_CHRONIC", train_ds, False)
-            tobacco_encoded = encode_categorical_feature(sex, "TOBACCO", train_ds, False)
-            #clasiffication_final_encoded = encode_categorical_feature(sex, "CLASIFFICATION_FINAL", train_ds, False)
-            #icu_encoded = encode_categorical_feature(sex, "ICU", train_ds, False)
 
-            # Numerical features
-            age_encoded = age #encode_numerical_feature(age, "age", train_ds)
+        # Integer categorical features
+        #usmer_encoded = encode_categorical_feature(sex, "USMER", train_ds, False)
+        #medical_unit_encoded = encode_categorical_feature(sex, "MEDICAL_UNIT", train_ds, False)
+        sex_encoded = encode_categorical_feature(sex, "SEX", train_ds, False)
+        #patient_type_encoded = encode_categorical_feature(sex, "PATIENT_TYPE", train_ds, False)
+        #date_died_encoded = encode_categorical_feature(sex, "DATE_DIED", train_ds, False)
+        #intubed_encoded = encode_categorical_feature(sex, "INTUBED", train_ds, False)
+        pneumonia_encoded = encode_categorical_feature(sex, "PNEUMONIA", train_ds, False)
+        pregnant_encoded = encode_categorical_feature(sex, "PREGNANT", train_ds, False)
+        diabetes_encoded = encode_categorical_feature(sex, "DIABETES", train_ds, False)
+        copd_encoded = encode_categorical_feature(sex, "COPD", train_ds, False)
+        asthma_encoded = encode_categorical_feature(sex, "ASTHMA", train_ds, False)
+        inmsupr_encoded = encode_categorical_feature(sex, "INMSUPR", train_ds, False)
+        hipertension_encoded = encode_categorical_feature(sex, "HIPERTENSION", train_ds, False)
+        other_disease_encoded = encode_categorical_feature(sex, "OTHER_DISEASE", train_ds, False)
+        cardiovascular_encoded = encode_categorical_feature(sex, "CARDIOVASCULAR", train_ds, False)
+        obesity_encoded = encode_categorical_feature(sex, "OBESITY", train_ds, False)
+        renal_chronic_encoded = encode_categorical_feature(sex, "RENAL_CHRONIC", train_ds, False)
+        tobacco_encoded = encode_categorical_feature(sex, "TOBACCO", train_ds, False)
+        #clasiffication_final_encoded = encode_categorical_feature(sex, "CLASIFFICATION_FINAL", train_ds, False)
+        #icu_encoded = encode_categorical_feature(sex, "ICU", train_ds, False)
 
-            all_features = layers.concatenate(
-                [
-                    #usmer_encoded,
-                    #medical_unit_encoded,
-                    sex_encoded,
-                    #patient_type_encoded,
-                    #date_died_encoded,
-                    #intubed_encoded,
-                    pneumonia_encoded,
-                    age_encoded,
-                    pregnant_encoded,
-                    diabetes_encoded,
-                    copd_encoded,
-                    asthma_encoded,
-                    inmsupr_encoded,
-                    hipertension_encoded,
-                    other_disease_encoded,
-                    cardiovascular_encoded,
-                    obesity_encoded,
-                    renal_chronic_encoded,
-                    tobacco_encoded,
-                    #clasiffication_final_encoded,
-                    #icu_encoded
-                ]
-            )
+        # Numerical features
+        age_encoded = age #encode_numerical_feature(age, "age", train_ds)
 
-            x = layers.Dense(self.batch, activation="relu")(all_features)
-            x = layers.Dropout(0.25)(x)
-            output = layers.Dense(1, activation="sigmoid")(x)
-            model = keras.Model(all_inputs, output)
-            model.compile(
-                optimizer=keras.optimizers.Adam(learning_rate=1e-5),
-                loss=keras.losses.BinaryCrossentropy(),
-                metrics=["accuracy"]
-            )
-            #keras.utils.plot_model(model, show_shapes=True, rankdir="LR")
-            model.fit(train_ds, epochs=2, validation_data=val_ds)
-            model.save(path)
+        all_f_layers = [
+            #usmer_encoded,
+            #medical_unit_encoded,
+            sex_encoded,
+            #patient_type_encoded,
+            #date_died_encoded,
+            #intubed_encoded,
+            pneumonia_encoded,
+            age_encoded,
+            pregnant_encoded,
+            diabetes_encoded,
+            copd_encoded,
+            asthma_encoded,
+            inmsupr_encoded,
+            hipertension_encoded,
+            other_disease_encoded,
+            cardiovascular_encoded,
+            obesity_encoded,
+            renal_chronic_encoded,
+            tobacco_encoded,
+            #clasiffication_final_encoded,
+            #icu_encoded
+        ]
+
+        '''
+            with open(all_f_layers_pkl, 'wb') as out_file:
+                pickle.dump(all_f_layers, out_file)
 
         else:
-            model = keras.models.load_model(path)
-        
-        return model
+            with open(all_f_layers_pkl, 'rb') as in_file:
+                all_f_layers = pickle.load(in_file)'''
+
+        all_features = layers.concatenate(all_f_layers)
+
+        x = layers.Dense(self.batch, activation="relu")(all_features)
+        x = layers.Dropout(0.5)(x)
+        output = layers.Dense(1, activation="sigmoid")(x)
+        model = keras.Model(all_inputs, output)
+        model.compile(
+            optimizer=keras.optimizers.AdamW(learning_rate=1e-5),
+            loss=keras.losses.BinaryCrossentropy(),
+            metrics=["accuracy"]
+        )
+        #keras.utils.plot_model(model, show_shapes=True, rankdir="LR")
+        model.fit(train_ds, epochs=5, validation_data=val_ds)
     
+        return model
+
     @property
     def features(self):
         if not self._features:
             self._features = self.train_model()
         return self._features
 
-    def run(self):
+    def run(self, args):
 
         model = self.train_model()
 
         sample = {
-            'SEX': 0,
+            'SEX': args.SEX,
             #'DATE_DIED': 1,
             #'INTUBED': 0,
-            'PNEUMONIA': 0,
-            'AGE': 35,
-            'PREGNANT': 1,
-            'DIABETES': 0,
-            'COPD': 0,
-            'ASTHMA': 1,
-            'INMSUPR': 1,
-            'HIPERTENSION': 1,
-            'OTHER_DISEASE': 1,
-            'CARDIOVASCULAR': 1,
-            'OBESITY': 1,
-            'RENAL_CHRONIC': 1,
-            'TOBACCO': 1
+            'PNEUMONIA': args.PNEUMONIA,
+            'AGE': args.AGE,
+            'PREGNANT': args.PREGNANT,
+            'DIABETES': args.DIABETES,
+            'COPD': args.COPD,
+            'ASTHMA': args.ASTHMA,
+            'INMSUPR': args.INMSUPR,
+            'HIPERTENSION': args.HIPERTENSION,
+            'OTHER_DISEASE': args.OTHER_DISEASE,
+            'CARDIOVASCULAR': args.CARDIOVASCULAR,
+            'OBESITY': args.OBESITY,
+            'RENAL_CHRONIC': args.RENAL_CHRONIC,
+            'TOBACCO': args.TOBACCO
         }
 
 
@@ -322,6 +335,12 @@ class COVID:
 def encode_numerical_feature(feature, name, dataset):
     # Create a Normalization layer for our feature
     normalizer = layers.Normalization()
+
+    def f_1(x, y):
+        return x[name]
+    
+    def f_2(x):
+        tf.expand_dims(x, -1)
 
     # Prepare a Dataset that only yields our feature
     feature_ds = dataset.map(lambda x, y: x[name])
@@ -340,6 +359,12 @@ def encode_categorical_feature(feature, name, dataset, is_string):
     # Create a lookup layer which will turn strings into integer indices
     lookup = lookup_class(output_mode="binary")
 
+    def f_1(x, y):
+        return x[name]
+    
+    def f_2(x):
+        tf.expand_dims(x, -1)
+
     # Prepare a Dataset that only yields our feature
     feature_ds = dataset.map(lambda x, y: x[name])
     feature_ds = feature_ds.map(lambda x: tf.expand_dims(x, -1))
@@ -351,10 +376,53 @@ def encode_categorical_feature(feature, name, dataset, is_string):
     encoded_feature = lookup(feature)
     return encoded_feature
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Argument Parser for COVID Data Processing")
+
+    # Required argument
+    parser.add_argument('--in_path', type=str, default='./Covid Data.csv',
+                        help='Input path for the data')
+
+    # Optional arguments with default values
+    parser.add_argument('--processed_path', type=str, default='./Processed Covid Data.csv',
+                        help='Path for the processed data file')
+    parser.add_argument('--class_col', type=str, default='PATIENT_TYPE',
+                        help='Column name for the class label')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for reproducibility')
+    parser.add_argument('--validation_frac', type=float, default=0.2,
+                        help='Fraction of data to use for validation')
+    parser.add_argument('--exclude', nargs='+', default=['USMER', 'MEDICAL_UNIT', 'CLASIFFICATION_FINAL', 'ICU'],
+                        help='List of columns to exclude from the data')
+    parser.add_argument('--batch', type=int, default=32,
+                        help='Batch size for data processing')
+
+    # Default values for additional parameters
+    parser.add_argument('--SEX', type=int, default=0)
+    parser.add_argument('--PNEUMONIA', type=int, default=0)
+    parser.add_argument('--AGE', type=int, default=35)
+    parser.add_argument('--PREGNANT', type=int, default=1)
+    parser.add_argument('--DIABETES', type=int, default=0)
+    parser.add_argument('--COPD', type=int, default=0)
+    parser.add_argument('--ASTHMA', type=int, default=1)
+    parser.add_argument('--INMSUPR', type=int, default=1)
+    parser.add_argument('--HIPERTENSION', type=int, default=1)
+    parser.add_argument('--OTHER_DISEASE', type=int, default=1)
+    parser.add_argument('--CARDIOVASCULAR', type=int, default=1)
+    parser.add_argument('--OBESITY', type=int, default=1)
+    parser.add_argument('--RENAL_CHRONIC', type=int, default=1)
+    parser.add_argument('--TOBACCO', type=int, default=1)
+
+    return parser.parse_args()
 
 def main():
-    covid = COVID('./Covid Data.csv')
-    covid.run()
+    covid = COVID()
+    args = parse_arguments()
+    '''
+    Namespace(in_path='./Covid Data.csv', processed_path='./Processed Covid Data.csv', class_col='PATIENT_TYPE', seed=42, validation_frac=0.2, exclude=['USMER', 'MEDICAL_UNIT', 'CLASIFFICATION_FINAL', 'ICU'], batch=32, SEX=0, PNEUMONIA=0, AGE=35, PREGNANT=1, DIABETES=0, COPD=0, ASTHMA=1, INMSUPR=1, HIPERTENSION=1, OTHER_DISEASE=1, CARDIOVASCULAR=1, OBESITY=1, RENAL_CHRONIC=1, TOBACCO=1)
+    '''
+    #print(covid.data)
+    covid.run(args)
 
 if __name__ == '__main__':
     main()
