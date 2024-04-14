@@ -138,6 +138,7 @@ class COVID:
         labels = dataframe.pop(self.target)
         ds = tf.data.Dataset.from_tensor_slices((dict(dataframe), labels))
         ds = ds.shuffle(buffer_size=len(dataframe))
+
         return ds
 
     @property
@@ -155,11 +156,12 @@ class COVID:
         return self._val_ds
             
 
-    def _get_model(self, path = './model_1.zip') -> keras.Model:
+    def train_model(self, path = './model_1.keras') -> keras.Model:
 
         if not os.path.isfile(path):
                 
             train_ds = self.train_ds
+            val_ds = self.val_ds
 
             # Categorical features encoded as integers
             #usmer = keras.Input(shape=(1,), name="USMER", dtype="int64")
@@ -270,6 +272,8 @@ class COVID:
                 loss=keras.losses.BinaryCrossentropy(),
                 metrics=["accuracy"]
             )
+            #keras.utils.plot_model(model, show_shapes=True, rankdir="LR")
+            model.fit(train_ds, epochs=2, validation_data=val_ds)
             model.save(path)
 
         else:
@@ -280,18 +284,12 @@ class COVID:
     @property
     def features(self):
         if not self._features:
-            self._features = self._get_model()
+            self._features = self.train_model()
         return self._features
 
     def run(self):
 
-        train_ds = self.train_ds
-        val_ds = self.val_ds
-
-        model = self._get_model()
-
-        #keras.utils.plot_model(model, show_shapes=True, rankdir="LR")
-        model.fit(train_ds, epochs=20, validation_data=val_ds)
+        model = self.train_model()
 
         sample = {
             'SEX': 0,
