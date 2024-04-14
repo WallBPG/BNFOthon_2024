@@ -34,7 +34,7 @@ class COVID:
 
     def __init__(
             self,
-            in_path: str = './Covid Data.csv',
+            in_path: str = os.path.normpath('./Covid Data.csv'),
             processed_path: str = './Processed Covid Data.csv',
             class_col: str = 'PATIENT_TYPE',
             seed: int = 42,
@@ -380,11 +380,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Argument Parser for COVID Data Processing")
 
     # Required argument
-    parser.add_argument('--in_path', type=str, default='./Covid Data.csv',
+    parser.add_argument('--in_path', type=str, default=os.path.normpath('./Covid Data.csv'),
                         help='Input path for the data')
 
     # Optional arguments with default values
-    parser.add_argument('--processed_path', type=str, default='./Processed Covid Data.csv',
+    parser.add_argument('--processed_path', type=str, default=os.path.normpath('./Processed Covid Data.csv'),
                         help='Path for the processed data file')
     parser.add_argument('--class_col', type=str, default='PATIENT_TYPE',
                         help='Column name for the class label')
@@ -416,8 +416,17 @@ def parse_arguments():
     return parser.parse_args()
 
 def main():
-    covid = COVID()
     args = parse_arguments()
+    covid = COVID(
+        in_path=args.in_path,
+        processed_path=args.processed_path,
+        class_col=args.class_col,
+        seed=args.seed,
+        validation_frac=args.validation_frac,
+        exclude=args.exclude,
+        batch=args.batch
+    )
+    
     '''
     Namespace(in_path='./Covid Data.csv', processed_path='./Processed Covid Data.csv', class_col='PATIENT_TYPE', seed=42, validation_frac=0.2, exclude=['USMER', 'MEDICAL_UNIT', 'CLASIFFICATION_FINAL', 'ICU'], batch=32, SEX=0, PNEUMONIA=0, AGE=35, PREGNANT=1, DIABETES=0, COPD=0, ASTHMA=1, INMSUPR=1, HIPERTENSION=1, OTHER_DISEASE=1, CARDIOVASCULAR=1, OBESITY=1, RENAL_CHRONIC=1, TOBACCO=1)
     '''
