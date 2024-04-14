@@ -9,5 +9,11 @@ risk or not. This can either have a graphical user interface or just be a script
 Resources:
 - [COVID-19 Dataset](https://www.kaggle.com/datasets/meirnizri/covid19-dataset)
 
-Usage:
+Nueral Network Model:
+- [neural_covid_classifier.py](./neural_covid_classifier.py)
+
+Nueral Network Usage:
 - See [example_run.sh](./example_run.sh)
+
+GUI Demo:
+- [link here](https://replit.com/@fanusr/BNFOthon2024?s=app)

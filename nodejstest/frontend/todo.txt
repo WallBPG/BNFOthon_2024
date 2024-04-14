@@ -1,0 +1,7 @@
+- toIndexJs() in script.jsx is sending an empty list to server (index.js). needs to be JSON of key: value pairs.
+- trim leading zeroes off age (google if there's a way to disallow this, also non-numeric inputs- 
+                    button is disabled but I don't even want to see them in the number input box)
+- process python args more efficiently
+- remove excess console logs
+- make pretty logo
+- oh god the variable names are awful and messy. STOP USING DATA AS A VARIABLE NAME
